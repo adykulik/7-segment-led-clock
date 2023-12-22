@@ -22,3 +22,16 @@ This repository contains the source code for an Arduino-based project that alter
 1. **Hardware Setup:** Connect the LED matrix, RTC module, and (optionally) the light sensor to the ESP8266.
 2. **Software Upload:** Flash the provided code to the ESP8266 using the Arduino IDE.
 3. **Web Interface:** Access the web interface via the ESP8266's IP address to adjust settings.
+
+
+## License and Acknowledgements
+This project incorporates components that are licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0). For more details about this license, please visit [here](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+As per the license requirements:
+- **Attribution:** Appropriate credit is given to the original authors of the components used, along with a link to the CC BY-NC-SA 4.0 license.
+- **NonCommercial:** The material is not used for commercial purposes.
+- **ShareAlike:** If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
+
+### Original Project
+Parts of this project were based on [7-Segment-Digital-Clock-V2](https://github.com/leonvandenbeukel/7-Segment-Digital-Clock-V2), licensed under the CC BY-NC-SA 4.0.
+
