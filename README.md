@@ -1,6 +1,6 @@
 # Arduino LED Clock and Temperature Display
 
-**Note:** I am actively working on and improving this project. Stay tuned for updates and enhancements!
+**Note:** This project is currently under active development. I will be updating and improving the code over time, so stay tuned for the latest enhancements!
 
 ## Overview
 This repository contains the source code for an Arduino-based project that alternates between displaying the current time and ambient temperature using a LED matrix. The project utilizes an ESP8266 module for web server capabilities and an RTC (Real-Time Clock) module for timekeeping.
