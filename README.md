@@ -22,7 +22,7 @@ This repository contains the source code for an Arduino-based project that alter
 |Micro USB cable                | 1x    |
 |Analog Output light sensor     | 1x    |
 |5V 2.5A power supply           | 1x    |
-|WS2812BECO IP30 LED Strip 60/m | 2m    |
+|WS2812BECO IP30 LED Strip 60 LED'S per meter | 2m    |
 
 ## Setup and Installation
 1. **Hardware Setup:** Connect the LED matrix, RTC module, and (optionally) the light sensor to the ESP8266.
