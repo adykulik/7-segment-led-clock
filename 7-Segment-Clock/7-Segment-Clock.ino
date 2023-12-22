@@ -9,7 +9,6 @@
 #define NUM_LEDS 86                           // Total of 86 LED's     
 #define DATA_PIN D6                           // Change this if you are using another type of ESP board than a WeMos D1 Mini
 #define MILLI_AMPS 2400 
-#define COUNTDOWN_OUTPUT D5
 
 #define WIFIMODE 2                            // 0 = Only Soft Access Point, 1 = Only connect to local WiFi network with UN/PW, 2 = Both
 
@@ -31,23 +30,18 @@ CRGB LEDs[NUM_LEDS];
 
 // Settings
 unsigned long prevTime = 0;
+bool autoCheck = false;
 byte r_val = 255;
 byte g_val = 0;
 byte b_val = 0;
+unsigned long lastModeSwitch = 0;
+byte clockMode = 0;  // 0 for clock, 1 for temperature
 bool dotsOn = true;
 byte brightness = 255;
 float temperatureCorrection = -3.0;
 byte temperatureSymbol = 12;                  // 12=Celcius, 13=Fahrenheit check 'numbers'
-byte clockMode = 0;                           // Clock modes: 0=Clock, 1=Countdown, 2=Temperature, 3=Scoreboard
-unsigned long countdownMilliSeconds;
-unsigned long endCountDownMillis;
 byte hourFormat = 24;                         // Change this to 12 if you want default 12 hours format instead of 24               
-CRGB countdownColor = CRGB::Green;
-byte scoreboardLeft = 0;
-byte scoreboardRight = 0;
-CRGB scoreboardColorLeft = CRGB::Green;
-CRGB scoreboardColorRight = CRGB::Red;
-CRGB alternateColor = CRGB::Black; 
+// define as AI LIGHT_SENSOR_PIN
 long numbers[] = {
   0b000111111111111111111,  // [0] 0
   0b000111000000000000111,  // [1] 1
@@ -66,7 +60,6 @@ long numbers[] = {
 };
 
 void setup() {
-  pinMode(COUNTDOWN_OUTPUT, OUTPUT);
   Serial.begin(115200); 
   delay(200);
 
@@ -145,15 +138,14 @@ void setup() {
     b_val = server.arg("b").toInt();
     server.send(200, "text/json", "{\"result\":\"ok\"}");
   });
-  server.on("/autoCheck", HTTP_POST, []() {    
-    auto = server.arg("autoCheck");
-    if (auto=true){
+  
+  server.on("/autoCheck", HTTP_POST, []() {
+  String autoCheckValue = server.arg("autoCheck");
+  autoCheck = (autoCheckValue == "true"); // Correctly sets autoCheck as a boolean
 
-  //DOROBIT BRIGTHENSS
+  server.send(200, "text/json", "{\"result\":\"ok\"}");
+});
 
-    }
-    server.send(200, "text/json", "{\"result\":\"ok\"}");
-  });
 
   server.on("/setdate", HTTP_POST, []() { 
     // Sample input: date = "Dec 06 2009", time = "12:34:56"
@@ -177,32 +169,10 @@ void setup() {
     server.send(200, "text/json", "{\"result\":\"ok\"}");
   });
   
-  server.on("/countdown", HTTP_POST, []() {    
-    countdownMilliSeconds = server.arg("ms").toInt();     
-    byte cd_r_val = server.arg("r").toInt();
-    byte cd_g_val = server.arg("g").toInt();
-    byte cd_b_val = server.arg("b").toInt();
-    digitalWrite(COUNTDOWN_OUTPUT, LOW);
-    countdownColor = CRGB(cd_r_val, cd_g_val, cd_b_val); 
-    endCountDownMillis = millis() + countdownMilliSeconds;
-    allBlank(); 
-    clockMode = 1;     
-    server.send(200, "text/json", "{\"result\":\"ok\"}");
-  });
-
   server.on("/temperature", HTTP_POST, []() {   
     temperatureCorrection = server.arg("correction").toInt();
     temperatureSymbol = server.arg("symbol").toInt();
-    clockMode = 2;     
-    server.send(200, "text/json", "{\"result\":\"ok\"}");
-  });  
-
-  server.on("/scoreboard", HTTP_POST, []() {   
-    scoreboardLeft = server.arg("left").toInt();
-    scoreboardRight = server.arg("right").toInt();
-    scoreboardColorLeft = CRGB(server.arg("rl").toInt(),server.arg("gl").toInt(),server.arg("bl").toInt());
-    scoreboardColorRight = CRGB(server.arg("rr").toInt(),server.arg("gr").toInt(),server.arg("br").toInt());
-    clockMode = 3;     
+    clockMode = 1;     
     server.send(200, "text/json", "{\"result\":\"ok\"}");
   });  
 
@@ -232,31 +202,45 @@ void setup() {
   }
   Serial.println(); 
   
-  digitalWrite(COUNTDOWN_OUTPUT, LOW);
 }
 
-void loop(){
-
+void loop() {
   server.handleClient(); 
   
   unsigned long currentMillis = millis();  
+
+  // Mode switching logic
+  if (currentMillis - lastModeSwitch >= 7000) {
+    // Switch mode
+    clockMode = (clockMode == 0) ? 1 : 0;
+    lastModeSwitch = currentMillis;
+  }
+
+  // Update display every second
   if (currentMillis - prevTime >= 1000) {
     prevTime = currentMillis;
 
+    // Adjust brightness based on autoCheck
+    if (autoCheck) {
+      int sensorValue = analogRead(LIGHT_SENSOR_PIN); // Replace with your light sensor pin
+      int dynamicBrightness = map(sensorValue, 0, 1023, 0, 255); // Adjust range as needed
+      FastLED.setBrightness(dynamicBrightness);
+    } else {
+      FastLED.setBrightness(brightness);
+    }
+
+    // Update display based on the current mode
     if (clockMode == 0) {
       updateClock();
     } else if (clockMode == 1) {
-      updateCountdown();
-    } else if (clockMode == 2) {
-      updateTemperature();      
-    } else if (clockMode == 3) {
-      updateScoreboard();            
+      updateTemperature();
     }
 
-    FastLED.setBrightness(brightness);
     FastLED.show();
   }   
 }
+
+
 
 void displayNumber(byte number, byte segment, CRGB color) {
   /*
@@ -335,80 +319,6 @@ void updateClock() {
   displayDots(color);  
 }
 
-void updateCountdown() {
-
-  if (countdownMilliSeconds == 0 && endCountDownMillis == 0) 
-    return;
-    
-  unsigned long restMillis = endCountDownMillis - millis();
-  unsigned long hours   = ((restMillis / 1000) / 60) / 60;
-  unsigned long minutes = (restMillis / 1000) / 60;
-  unsigned long seconds = restMillis / 1000;
-  int remSeconds = seconds - (minutes * 60);
-  int remMinutes = minutes - (hours * 60); 
-  
-  Serial.print(restMillis);
-  Serial.print(" ");
-  Serial.print(hours);
-  Serial.print(" ");
-  Serial.print(minutes);
-  Serial.print(" ");
-  Serial.print(seconds);
-  Serial.print(" | ");
-  Serial.print(remMinutes);
-  Serial.print(" ");
-  Serial.println(remSeconds);
-
-  byte h1 = hours / 10;
-  byte h2 = hours % 10;
-  byte m1 = remMinutes / 10;
-  byte m2 = remMinutes % 10;  
-  byte s1 = remSeconds / 10;
-  byte s2 = remSeconds % 10;
-
-  CRGB color = countdownColor;
-  if (restMillis <= 60000) {
-    color = CRGB::Red;
-  }
-
-  if (hours > 0) {
-    // hh:mm
-    displayNumber(h1,3,color); 
-    displayNumber(h2,2,color);
-    displayNumber(m1,1,color);
-    displayNumber(m2,0,color);  
-  } else {
-    // mm:ss   
-    displayNumber(m1,3,color);
-    displayNumber(m2,2,color);
-    displayNumber(s1,1,color);
-    displayNumber(s2,0,color);  
-  }
-
-  displayDots(color);  
-
-  if (hours <= 0 && remMinutes <= 0 && remSeconds <= 0) {
-    Serial.println("Countdown timer ended.");
-    //endCountdown();
-    countdownMilliSeconds = 0;
-    endCountDownMillis = 0;
-    digitalWrite(COUNTDOWN_OUTPUT, HIGH);
-    return;
-  }  
-}
-
-void endCountdown() {
-  allBlank();
-  for (int i=0; i<NUM_LEDS; i++) {
-    if (i>0)
-      LEDs[i-1] = CRGB::Black;
-    
-    LEDs[i] = CRGB::Red;
-    FastLED.show();
-    delay(25);
-  }  
-}
-
 void displayDots(CRGB color) {
   if (dotsOn) {
     LEDs[42] = color;
@@ -445,19 +355,6 @@ void updateTemperature() {
   displayNumber(t2,2,color);
   displayNumber(11,1,color);
   displayNumber(temperatureSymbol,0,color);
-  hideDots();
-}
-
-void updateScoreboard() {
-  byte sl1 = scoreboardLeft / 10;
-  byte sl2 = scoreboardLeft % 10;
-  byte sr1 = scoreboardRight / 10;
-  byte sr2 = scoreboardRight % 10;
-
-  displayNumber(sl1,3,scoreboardColorLeft);
-  displayNumber(sl2,2,scoreboardColorLeft);
-  displayNumber(sr1,1,scoreboardColorRight);
-  displayNumber(sr2,0,scoreboardColorRight);
   hideDots();
 }
 
