@@ -12,11 +12,17 @@ This repository contains the source code for an Arduino-based project that alter
 - **Web Interface:** Adjust settings like LED brightness and color via a web interface.
 - **Auto-Brightness:** Adjusts LED brightness automatically based on ambient light (requires a light sensor).
 
-## Hardware Requirements
-- ESP8266 Module (e.g., WeMos D1 Mini)
-- LED Matrix (86 LEDs, I use WS2812B eco IP30)
-- RTC Module (e.g., DS3231)
-- Light Sensor (for auto-brightness feature, optional)
+## Hardware requirements
+
+| Components                            |
+| -------------                 | ----- |
+|ESP8266 WeMos Mini D1          | 1x    |
+|DS3231 RTC                     | 1x    |
+|Micro USB Breakout board       | 1x    |
+|Micro USB cable                | 1x    |
+|Analog Output light sensor     | 1x    |
+|5V 2.5A power supply           | 1x    |
+|WS2812B ECO IP30 LED Strip 60 LED's per meter     | 2m    |
 
 ## Setup and Installation
 1. **Hardware Setup:** Connect the LED matrix, RTC module, and (optionally) the light sensor to the ESP8266.
@@ -24,8 +30,9 @@ This repository contains the source code for an Arduino-based project that alter
 3. **Web Interface:** Access the web interface via the ESP8266's IP address to adjust settings.
 
 
-## License and Acknowledgements
-This project incorporates components that are licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0). For more details about this license, please visit [here](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+## License
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
 As per the license requirements:
 - **Attribution:** Appropriate credit is given to the original authors of the components used, along with a link to the CC BY-NC-SA 4.0 license.
