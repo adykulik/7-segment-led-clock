@@ -1,14 +1,15 @@
-# Arduino LED Clock and Temperature Display
+# Arduino LED Clock
 
 **Note:** This project is currently under active development. I will be updating and improving the code over time, so stay tuned for the latest enhancements!
 
 ## Overview
-This repository contains the source code for an Arduino-based project that alternates between displaying the current time and ambient temperature using a LED matrix. The project utilizes an ESP8266 module for web server capabilities and an RTC (Real-Time Clock) module for timekeeping.
+This repository contains the source code for an Arduino-based project that alternates between displaying the current time, date and ambient temperature using a LED matrix. The project utilizes an ESP8266 module for web server capabilities and an RTC (Real-Time Clock) module for timekeeping.
 
 ## Features
 - **Clock Mode (Mode 0):** Displays the current time on the LED matrix.
-- **Temperature Mode (Mode 1):** Shows the current temperature, read from the RTC's temperature sensor.
-- **Automatic Mode Switching:** Alternates between clock and temperature display every x seconds.
+- **Date Mode (Mode 1):** Shows the current date, read from the RTC's temperature sensor.
+- **Temperature Mode (Mode 2):** Shows the current temperature, read from the RTC's temperature sensor.
+- **Automatic Mode Switching:** Alternates between clock, date and temperature display in selected interval.
 - **Web Interface:** Adjust settings like LED brightness and color via a web interface.
 - **Auto-Brightness:** Adjusts LED brightness automatically based on ambient light (requires a light sensor).
 
@@ -20,7 +21,7 @@ This repository contains the source code for an Arduino-based project that alter
 |DS3231 RTC                     | 1x    |
 |Micro USB Breakout board       | 1x    |
 |Micro USB cable                | 1x    |
-|Analog Output light sensor     | 1x    |
+|Analog Output light sensor (optional)    | 1x    |
 |5V 2.5A power supply           | 1x    |
 |WS2812BECO IP30 LED Strip 60 LED'S per meter | 2m    |
 

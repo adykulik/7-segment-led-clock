@@ -35,7 +35,8 @@ byte r_val = 255;
 byte g_val = 0;
 byte b_val = 0;
 unsigned long lastModeSwitch = 0;
-byte clockMode = 0;  // 0 for clock, 1 for temperature
+byte clockMode = 0;  // 0 for clock, 1 for date, 2 for temperature
+unsigned long switchInterval = 7000; // Time interval for switching modes in milliseconds
 bool dotsOn = true;
 byte brightness = 255;
 float temperatureCorrection = -3.0;
@@ -206,15 +207,20 @@ void setup() {
 
 void loop() {
   server.handleClient(); 
-  
   unsigned long currentMillis = millis();  
 
   // Mode switching logic
-  if (currentMillis - lastModeSwitch >= 7000) {
-    // Switch mode
-    clockMode = (clockMode == 0) ? 1 : 0;
+  if (currentMillis - lastModeSwitch >= switchInterval) {
+    clockMode = (clockMode == 0) ? 1 : 0; // switching between time and date
     lastModeSwitch = currentMillis;
   }
+
+  /*
+  if (currentMillis - lastModeSwitchTime >= switchInterval) {
+    clockMode = (clockMode + 1) % 3; // switching between time date and temperature
+    lastModeSwitchTime = currentMillis;
+  }
+  */
 
   // Update display every second
   if (currentMillis - prevTime >= 1000) {
@@ -233,6 +239,8 @@ void loop() {
     if (clockMode == 0) {
       updateClock();
     } else if (clockMode == 1) {
+      updateDate();
+    } else if (clockMode == 2) {
       updateTemperature();
     }
 
@@ -287,37 +295,58 @@ void allBlank() {
   FastLED.show();
 }
 
+void updateHours(int hour) {
+    byte h1 = hour / 10;
+    byte h2 = hour % 10;
+    CRGB color = CRGB(r_val, g_val, b_val);
+
+    if (h1 > 0)
+        displayNumber(h1, 3, color);
+    else 
+        displayNumber(10, 3, color);  // Blank
+
+    displayNumber(h2, 2, color);
+}
+
+void updateMinutes(int mins) {
+    byte m1 = mins / 10;
+    byte m2 = mins % 10;
+    CRGB color = CRGB(r_val, g_val, b_val);
+
+    displayNumber(m1, 1, color);
+    displayNumber(m2, 0, color);
+}
+
 void updateClock() {  
+    RtcDateTime now = Rtc.GetDateTime();
+    int hour = now.Hour();
+    int mins = now.Minute();
+
+    if (hourFormat == 12 && hour > 12)
+        hour = hour - 12;
+
+    updateHours(hour);
+    updateMinutes(mins);
+    displayDots(CRGB(r_val, g_val, b_val));  
+}
+
+void updateDate() {
   RtcDateTime now = Rtc.GetDateTime();
-  // printDateTime(now);    
 
-  int hour = now.Hour();
-  int mins = now.Minute();
-  int secs = now.Second();
+  byte day = now.Day();
+  byte month = now.Month();
 
-  if (hourFormat == 12 && hour > 12)
-    hour = hour - 12;
-  
-  byte h1 = hour / 10;
-  byte h2 = hour % 10;
-  byte m1 = mins / 10;
-  byte m2 = mins % 10;  
-  byte s1 = secs / 10;
-  byte s2 = secs % 10;
-  
   CRGB color = CRGB(r_val, g_val, b_val);
 
-  if (h1 > 0)
-    displayNumber(h1,3,color);
-  else 
-    displayNumber(10,3,color);  // Blank
-    
-  displayNumber(h2,2,color);
-  displayNumber(m1,1,color);
-  displayNumber(m2,0,color); 
+  // Display the day (DD)
+  displayNumber(day / 10, 3, color);   // Tens place of day
+  displayNumber(day % 10, 2, color);   // Ones place of day
 
-  displayDots(color);  
+  // Display the month (MM)
+  displayNumber(month / 10, 1, color); // Tens place of month
+  displayNumber(month % 10, 0, color); // Ones place of month
 }
+
 
 void displayDots(CRGB color) {
   if (dotsOn) {
